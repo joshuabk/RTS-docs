@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><p class="eyebrow">Return-to-service register</p><h1>{{ title }}</h1></div></div>
+
+{% if not has_clinics %}
+<div class="nonfield">No clinics exist yet. Add a clinic and at least one machine on the
+  <a href="{% url 'reports:manage' %}">Clinics &amp; machines</a> page first.</div>
+{% elif not has_machines %}
+<div class="nonfield">No machines exist yet. Add a machine on the
+  <a href="{% url 'reports:manage' %}">Clinics &amp; machines</a> page first.</div>
+{% endif %}
+
+<form method="post" class="formcard" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="nonfield">{{ form.non_field_errors }}</div>{% endif %}
+  <div class="form-grid">
+    {% for field in form %}
+      <div class="form-row {% if field.name in 'work_performed physics_evaluation vendor_doc_url' %}full{% endif %}">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}
+        {% if field.errors %}<ul class="errlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Save report</button>
+    <a class="btn btn-ghost" href="{% if report %}{{ report.get_absolute_url }}{% else %}{% url 'reports:list' %}{% endif %}">Cancel</a>
+  </div>
+</form>
+
+<script>
+(function () {
+  var clinic = document.getElementById("{{ form.clinic.id_for_label }}");
+  var machine = document.getElementById("{{ form.machine.id_for_label }}");
+  if (!clinic || !machine) return;
+  var endpoint = "{% url 'reports:machines_for_clinic' %}";
+
+  function setPlaceholder(text) {
+    machine.innerHTML = "";
+    var opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = text;
+    machine.appendChild(opt);
+  }
+
+  function loadMachines(clinicId, selectedId) {
+    if (!clinicId) { setPlaceholder("Select a clinic first…"); return; }
+    machine.disabled = true;
+    setPlaceholder("Loading…");
+    fetch(endpoint + "?clinic=" + encodeURIComponent(clinicId), {
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        machine.innerHTML = "";
+        if (!data.machines.length) {
+          setPlaceholder("No machines for this clinic");
+          machine.disabled = true;
+          return;
+        }
+        var ph = document.createElement("option");
+        ph.value = ""; ph.textContent = "Select a machine…";
+        machine.appendChild(ph);
+        data.machines.forEach(function (m) {
+          var opt = document.createElement("option");
+          opt.value = m.id;
+          opt.textContent = m.name;
+          if (String(m.id) === String(selectedId)) opt.selected = true;
+          machine.appendChild(opt);
+        });
+        machine.disabled = false;
+      })
+      .catch(function () { setPlaceholder("Could not load machines"); machine.disabled = false; });
+  }
+
+  clinic.addEventListener("change", function () { loadMachines(clinic.value, null); });
+
+  // On first load with no clinic chosen, show a helpful placeholder.
+  if (!clinic.value) {
+    setPlaceholder("Select a clinic first…");
+    machine.disabled = true;
+  }
+})();
+</script>
+{% endblock %}

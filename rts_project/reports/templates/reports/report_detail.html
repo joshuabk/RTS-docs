@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}{{ report.reference }}{% endblock %}
+{% block content %}
+<div class="actions" style="margin-bottom:1rem;">
+  <a class="btn btn-ghost" href="{% url 'reports:list' %}">← All reports</a>
+</div>
+
+<article class="sheet">
+  <div class="sheet-head">
+    <div>
+      <span class="ref">{{ report.reference }}</span>
+      <h1>{{ report.machine.name }}</h1>
+      <div class="rcard-meta"><span>{{ report.machine.department.name }}</span></div>
+    </div>
+    <div class="rcard-pills">
+      <span class="pill pill-{{ report.physics_status }}">Physics: {{ report.get_physics_status_display }}</span>
+      <span class="pill pill-{{ report.status }}">{{ report.get_status_display }}</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Machine &amp; department</h2>
+    <div class="grid">
+      <div class="field"><div class="lbl">Machine</div><div class="val">{{ report.machine.name }}</div></div>
+      <div class="field"><div class="lbl">Department</div><div class="val">{{ report.machine.department.name }}</div></div>
+      <div class="field"><div class="lbl">Machine type</div><div class="val">{{ report.machine.get_machine_type_display }}</div></div>
+      <div class="field"><div class="lbl">Location</div><div class="val">{{ report.machine.department.location|default:"—" }}</div></div>
+      <div class="field"><div class="lbl">Manufacturer / model</div><div class="val">{{ report.machine.manufacturer }} {{ report.machine.model }}</div></div>
+      <div class="field"><div class="lbl">Serial number</div><div class="val mono">{{ report.machine.serial_number|default:"—" }}</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Outage &amp; work</h2>
+    <div class="grid">
+      <div class="field"><div class="lbl">Outage start</div><div class="val mono">{{ report.outage_start|date:"d M Y, H:i"|default:"—" }}</div></div>
+      <div class="field"><div class="lbl">Work completed</div><div class="val mono">{{ report.work_completed_at|date:"d M Y, H:i" }}</div></div>
+      <div class="field"><div class="lbl">Work performed by</div><div class="val">{{ report.performed_by|default:"—" }}</div></div>
+      <div class="field docfield"><div class="lbl">Vendor documentation</div><div class="val">
+        {% if report.vendor_doc_url %}<a href="{{ report.vendor_doc_url }}" target="_blank" rel="noopener">{{ report.vendor_doc_url }}</a>{% else %}—{% endif %}
+      </div></div>
+      <div class="field full"><div class="lbl">What was worked on</div><div class="val prose">{{ report.work_performed }}</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Physics evaluation</h2>
+    <div class="grid">
+      <div class="field"><div class="lbl">Status</div><div class="val">{{ report.get_physics_status_display }}</div></div>
+      <div class="field"><div class="lbl">Physicist</div><div class="val">{{ report.physicist|default:"—" }}</div></div>
+      <div class="field full"><div class="lbl">Evaluation performed</div><div class="val prose">{{ report.physics_evaluation|default:"—" }}</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Approval</h2>
+    <div class="grid">
+      <div class="field"><div class="lbl">Return to service approved by</div><div class="val">{{ report.approved_by|default:"—" }}</div></div>
+      <div class="field"><div class="lbl">Approval date</div><div class="val mono">{{ report.approval_date|date:"d M Y, H:i"|default:"—" }}</div></div>
+    </div>
+  </div>
+
+  <div class="section actions">
+    <a class="btn btn-primary" href="{% url 'reports:pdf' report.pk %}">Download PDF</a>
+    <a class="btn btn-ghost" href="{% url 'reports:edit' report.pk %}">Edit report</a>
+  </div>
+</article>
+{% endblock %}

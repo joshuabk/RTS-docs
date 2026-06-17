@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Return-to-service register</p>
+    <h1>Reports</h1>
+  </div>
+  <span class="count">{{ reports|length }} shown · {{ total }} total</span>
+</div>
+
+<form class="filters" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="Search machine, work, approver…">
+  <select name="department" onchange="this.form.submit()">
+    <option value="">All departments</option>
+    {% for d in departments %}
+      <option value="{{ d.id }}" {% if selected_department == d.id|stringformat:'s' %}selected{% endif %}>{{ d.name }}</option>
+    {% endfor %}
+  </select>
+  <select name="status" onchange="this.form.submit()">
+    <option value="">Any status</option>
+    {% for value, label in status_choices %}
+      <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn btn-ghost" type="submit">Filter</button>
+</form>
+
+{% if reports %}
+<div class="card-list">
+  {% for r in reports %}
+  <a class="rcard" href="{{ r.get_absolute_url }}">
+    <div class="rcard-top">
+      <span class="ref">{{ r.reference }}</span>
+      <span class="rcard-pills">
+        <span class="pill pill-{{ r.physics_status }}">Physics: {{ r.get_physics_status_display }}</span>
+        <span class="pill pill-{{ r.status }}">{{ r.get_status_display }}</span>
+      </span>
+    </div>
+    <h3>{{ r.machine.name }}</h3>
+    <div class="rcard-meta">
+      <span>{{ r.machine.department.name }}</span>
+      <span class="mono">Completed {{ r.work_completed_at|date:"d M Y, H:i" }}</span>
+      {% if r.approved_by %}<span>Approved by {{ r.approved_by }}</span>{% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+  <h2>No reports yet</h2>
+  <p>Create the first return-to-service record when a machine comes back online.</p>
+  <a class="btn btn-primary" href="{% url 'reports:create' %}">New report</a>
+</div>
+{% endif %}
+{% endblock %}

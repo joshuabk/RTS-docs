@@ -1,0 +1,37 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Return to Service{% endblock %} · RTS Register</title>
+  <link rel="stylesheet" href="{% static 'reports/app.css' %}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{% url 'reports:list' %}">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-text">RTS Register<small>Return-to-Service Documentation</small></span>
+    </a>
+    {% if user.is_authenticated %}
+    <nav class="topnav">
+      <a href="{% url 'reports:list' %}">Reports</a>
+      <a href="{% url 'reports:manage' %}">Clinics &amp; Machines</a>
+      <a class="btn btn-primary" href="{% url 'reports:create' %}">New report</a>
+      <form method="post" action="{% url 'logout' %}" class="logout-form">
+        {% csrf_token %}
+        <span class="who">{{ user.get_username }}</span>
+        <button type="submit" class="linkbtn">Sign out</button>
+      </form>
+    </nav>
+    {% endif %}
+  </header>
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="foot">
+    <span>RTS Register</span>
+    <span class="foot-note">Machine return-to-service records for radiation oncology</span>
+  </footer>
+</body>
+</html>

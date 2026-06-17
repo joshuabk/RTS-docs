@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Clinics & machines{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><p class="eyebrow">Setup</p><h1>Clinics &amp; machines</h1></div>
+</div>
+
+{% if messages %}
+  {% for m in messages %}<div class="flash flash-{{ m.tags }}">{{ m }}</div>{% endfor %}
+{% endif %}
+
+<p class="help" style="margin-bottom:1.2rem;">
+  Add the clinics and machines that should appear as selection options when creating a
+  report. Every machine belongs to exactly one clinic.
+</p>
+
+<div class="manage-grid">
+  <!-- Add clinic -->
+  <section class="formcard">
+    <h2 class="card-title">Add a clinic</h2>
+    <form method="post" action="{% url 'reports:clinic_create' %}" novalidate>
+      {% csrf_token %}
+      {% if clinic_form.non_field_errors %}<div class="nonfield">{{ clinic_form.non_field_errors }}</div>{% endif %}
+      {% for field in clinic_form %}
+        <div class="form-row" style="margin-bottom:.9rem;">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}
+          {% if field.errors %}<ul class="errlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary">Add clinic</button>
+    </form>
+  </section>
+
+  <!-- Add machine -->
+  <section class="formcard">
+    <h2 class="card-title">Add a machine</h2>
+    {% if not has_clinics %}
+      <p class="help">Add a clinic first — every machine must belong to one.</p>
+    {% else %}
+    <form method="post" action="{% url 'reports:machine_create' %}" novalidate>
+      {% csrf_token %}
+      {% if machine_form.non_field_errors %}<div class="nonfield">{{ machine_form.non_field_errors }}</div>{% endif %}
+      {% for field in machine_form %}
+        <div class="form-row" style="margin-bottom:.9rem;">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}
+          {% if field.errors %}<ul class="errlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary">Add machine</button>
+    </form>
+    {% endif %}
+  </section>
+</div>
+
+<!-- Current clinics & machines -->
+<h2 class="card-title" style="margin:1.8rem 0 .8rem;">Current clinics</h2>
+{% if clinics %}
+<div class="clinic-list">
+  {% for c in clinics %}
+  <div class="clinic-block">
+    <div class="clinic-head">
+      <div>
+        <strong>{{ c.name }}</strong>
+        {% if c.code %}<span class="mono-tag">{{ c.code }}</span>{% endif %}
+        {% if c.location %}<span class="help"> · {{ c.location }}</span>{% endif %}
+      </div>
+      <span class="count">{{ c.machine_count }} machine{{ c.machine_count|pluralize }}</span>
+    </div>
+    {% if c.machines.all %}
+    <ul class="machine-list">
+      {% for m in c.machines.all %}
+        <li>
+          <span>{{ m.name }}</span>
+          <span class="help">{{ m.get_machine_type_display }}{% if m.serial_number %} · <span class="mono-tag">{{ m.serial_number }}</span>{% endif %}</span>
+        </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+      <p class="help" style="margin:.4rem 0 0;">No machines yet.</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty"><h2>No clinics yet</h2><p>Add your first clinic above to get started.</p></div>
+{% endif %}
+
+{% if open_form %}
+<script>document.querySelector('.manage-grid section:nth-child({% if open_form == "machine" %}2{% else %}1{% endif %}) input, .manage-grid section:nth-child({% if open_form == "machine" %}2{% else %}1{% endif %}) select')?.focus();</script>
+{% endif %}
+{% endblock %}
