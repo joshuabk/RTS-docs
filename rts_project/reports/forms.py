@@ -11,7 +11,10 @@ class _DateTimeInput(forms.DateTimeInput):
         if value in (None, ""):
             return ""
         if hasattr(value, "strftime"):
-            return timezone.localtime(value).strftime("%Y-%m-%dT%H:%M")
+            # localtime() only accepts aware datetimes; render naive ones as-is.
+            if timezone.is_aware(value):
+                value = timezone.localtime(value)
+            return value.strftime("%Y-%m-%dT%H:%M")
         return value
 
 

@@ -68,14 +68,26 @@
         {% if c.code %}<span class="mono-tag">{{ c.code }}</span>{% endif %}
         {% if c.location %}<span class="help"> · {{ c.location }}</span>{% endif %}
       </div>
-      <span class="count">{{ c.machine_count }} machine{{ c.machine_count|pluralize }}</span>
+      <div class="head-right">
+        <span class="count">{{ c.machine_count }} machine{{ c.machine_count|pluralize }}</span>
+        <span class="row-actions">
+          <a href="{% url 'reports:clinic_edit' c.pk %}">Edit</a>
+          <a class="danger" href="{% url 'reports:clinic_delete' c.pk %}">Delete</a>
+        </span>
+      </div>
     </div>
     {% if c.machines.all %}
     <ul class="machine-list">
       {% for m in c.machines.all %}
         <li>
           <span>{{ m.name }}</span>
-          <span class="help">{{ m.get_machine_type_display }}{% if m.serial_number %} · <span class="mono-tag">{{ m.serial_number }}</span>{% endif %}</span>
+          <span class="machine-right">
+            <span class="help">{{ m.get_machine_type_display }}{% if m.serial_number %} · <span class="mono-tag">{{ m.serial_number }}</span>{% endif %}</span>
+            <span class="row-actions">
+              <a href="{% url 'reports:machine_edit' m.pk %}">Edit</a>
+              <a class="danger" href="{% url 'reports:machine_delete' m.pk %}">Delete</a>
+            </span>
+          </span>
         </li>
       {% endfor %}
     </ul>
@@ -84,6 +96,7 @@
     {% endif %}
   </div>
   {% endfor %}
+    
 </div>
 {% else %}
 <div class="empty"><h2>No clinics yet</h2><p>Add your first clinic above to get started.</p></div>

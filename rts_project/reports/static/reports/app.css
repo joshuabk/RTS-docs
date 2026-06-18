@@ -182,3 +182,14 @@ textarea.form-control { resize: vertical; }
 .machine-list li > span:first-child { font-weight: 600; }
 
 @media (max-width: 620px) { .manage-grid { grid-template-columns: 1fr; } }
+
+/* --- Edit / delete actions on the manage page --- */
+.head-right { display: flex; align-items: center; gap: .9rem; }
+.machine-right { display: flex; align-items: center; gap: .9rem; flex-wrap: wrap; }
+.row-actions { display: inline-flex; gap: .7rem; white-space: nowrap; }
+.row-actions a { font-size: .82rem; font-weight: 600; text-decoration: none; color: var(--petrol); }
+.row-actions a:hover { text-decoration: underline; }
+.row-actions a.danger { color: var(--red); }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-danger:hover { background: #8d3325; }
+.machine-list li { align-items: center; }

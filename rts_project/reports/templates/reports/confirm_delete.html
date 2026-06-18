@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Delete {{ kind }}{% endblock %}
+{% block content %}
+<div class="actions" style="margin-bottom:1rem;">
+  <a class="btn btn-ghost" href="{% url 'reports:manage' %}">← Clinics &amp; machines</a>
+</div>
+
+<div class="page-head"><div><p class="eyebrow">Setup</p><h1>Delete {{ kind }}</h1></div></div>
+
+<div class="formcard" style="max-width:520px;">
+  <p>You are about to delete the {{ kind }}
+    <strong>{{ object_name }}</strong>{% if detail %} <span class="help">· {{ detail }}</span>{% endif %}.</p>
+
+  {% if blocked_reason %}
+    <div class="nonfield">{{ blocked_reason }}</div>
+    <div class="form-actions">
+      <a class="btn btn-ghost" href="{% url 'reports:manage' %}">Back</a>
+    </div>
+  {% else %}
+    <p class="help">This can’t be undone.</p>
+    <form method="post" action="{{ action_url }}">
+      {% csrf_token %}
+      <div class="form-actions">
+        <button type="submit" class="btn btn-danger">Delete {{ kind }}</button>
+        <a class="btn btn-ghost" href="{% url 'reports:manage' %}">Cancel</a>
+      </div>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

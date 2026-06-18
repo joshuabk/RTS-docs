@@ -12,6 +12,9 @@ from .forms import (
 from .models import Department, Machine, ReturnToServiceReport
 from .pdf import build_report_pdf
 
+from django.db.models.deletion import ProtectedError
+from django.urls import reverse
+
 
 @login_required
 def report_list(request):
@@ -162,6 +165,65 @@ def clinic_create(request):
         )
     return redirect("reports:manage")
 
+@login_required
+def clinic_edit(request, pk):
+    clinic = get_object_or_404(Department, pk=pk)
+    if request.method == "POST":
+        form = ClinicForm(request.POST, instance=clinic)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Clinic “{clinic.name}” updated.")
+            return redirect("reports:manage")
+    else:
+        form = ClinicForm(instance=clinic)
+    return render(
+        request,
+        "reports/object_form.html",
+        {"form": form, "kind": "clinic", "title": f"Edit clinic — {clinic.name}"},
+    )
+
+
+@login_required
+def clinic_delete(request, pk):
+    clinic = get_object_or_404(Department, pk=pk)
+    machine_count = clinic.machines.count()
+    if request.method == "POST":
+        if machine_count:
+            messages.error(
+                request,
+                f"Can’t delete “{clinic.name}” — it still has {machine_count} "
+                f"machine{'s' if machine_count != 1 else ''}. Delete or reassign them first.",
+            )
+            return redirect("reports:manage")
+        name = clinic.name
+        try:
+            clinic.delete()
+            messages.success(request, f"Clinic “{name}” deleted.")
+        except ProtectedError:
+            messages.error(request, f"Can’t delete “{name}” — other records depend on it.")
+        return redirect("reports:manage")
+
+    blocked_reason = ""
+    if machine_count:
+        blocked_reason = (
+            f"This clinic still has {machine_count} "
+            f"machine{'s' if machine_count != 1 else ''}. "
+            "Delete or reassign its machines before removing the clinic."
+        )
+    return render(
+        request,
+        "reports/confirm_delete.html",
+        {
+            "kind": "clinic",
+            "object_name": clinic.name,
+            "detail": clinic.location,
+            "blocked_reason": blocked_reason,
+            "action_url": reverse("reports:clinic_delete", args=[clinic.pk]),
+        },
+    )
+
+
+
 
 @login_required
 def machine_create(request):
@@ -187,6 +249,63 @@ def machine_create(request):
             },
         )
     return redirect("reports:manage")
+
+@login_required
+def machine_edit(request, pk):
+    machine = get_object_or_404(Machine, pk=pk)
+    if request.method == "POST":
+        form = MachineForm(request.POST, instance=machine)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Machine “{machine.name}” updated.")
+            return redirect("reports:manage")
+    else:
+        form = MachineForm(instance=machine)
+    return render(
+        request,
+        "reports/object_form.html",
+        {"form": form, "kind": "machine", "title": f"Edit machine — {machine.name}"},
+    )
+
+
+@login_required
+def machine_delete(request, pk):
+    machine = get_object_or_404(Machine, pk=pk)
+    report_count = machine.rts_reports.count()
+    if request.method == "POST":
+        if report_count:
+            messages.error(
+                request,
+                f"Can’t delete “{machine.name}” — it is used by {report_count} "
+                f"report{'s' if report_count != 1 else ''}. Those records must be kept.",
+            )
+            return redirect("reports:manage")
+        name = machine.name
+        try:
+            machine.delete()
+            messages.success(request, f"Machine “{name}” deleted.")
+        except ProtectedError:
+            messages.error(request, f"Can’t delete “{name}” — other records depend on it.")
+        return redirect("reports:manage")
+
+    blocked_reason = ""
+    if report_count:
+        blocked_reason = (
+            f"This machine is referenced by {report_count} "
+            f"return-to-service report{'s' if report_count != 1 else ''}, "
+            "which must be preserved. It can’t be deleted."
+        )
+    return render(
+        request,
+        "reports/confirm_delete.html",
+        {
+            "kind": "machine",
+            "object_name": machine.name,
+            "detail": machine.department.name,
+            "blocked_reason": blocked_reason,
+            "action_url": reverse("reports:machine_delete", args=[machine.pk]),
+        },
+    )
 
 
 @login_required

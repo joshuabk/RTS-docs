@@ -11,6 +11,8 @@ from reportlab.platypus import (
     HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle,
 )
 
+
+
 INK = colors.HexColor("#16302c")
 PETROL = colors.HexColor("#0e5c57")
 MUTED = colors.HexColor("#5b6b67")
@@ -21,7 +23,9 @@ PAPER = colors.HexColor("#f3f6f4")
 def _fmt(dt):
     if not dt:
         return "\u2014"
-    return timezone.localtime(dt).strftime("%d %b %Y, %H:%M")
+    if timezone.is_aware(dt):
+        dt = timezone.localtime(dt)
+    return dt.strftime("%d %b %Y, %H:%M")
 
 
 def build_report_pdf(report):
