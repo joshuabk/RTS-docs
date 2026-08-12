@@ -86,6 +86,8 @@ body {
 }
 .filters input { min-width: 220px; flex: 1; }
 .filters input:focus, .filters select:focus { outline: 2px solid var(--petrol); outline-offset: 1px; border-color: var(--petrol); }
+.filters .filter-date { display: inline-flex; align-items: center; gap: .45rem; font-size: .85rem; color: var(--muted, #667); }
+.filters .filter-date input[type="date"] { min-width: 0; flex: 0 0 auto; }
 
 /* Status pills */
 .pill {

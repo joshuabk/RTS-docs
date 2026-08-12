@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.dateparse import parse_date
 
 from .forms import (
     ClinicForm,
@@ -24,6 +25,8 @@ def report_list(request):
     query = request.GET.get("q", "").strip()
     dept = request.GET.get("department", "").strip()
     status = request.GET.get("status", "").strip()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
 
     if query:
         qs = qs.filter(
@@ -36,6 +39,18 @@ def report_list(request):
         qs = qs.filter(machine__department_id=dept)
     if status:
         qs = qs.filter(status=status)
+    if date_from:
+        parsed = parse_date(date_from)
+        if parsed:
+            qs = qs.filter(work_completed_at__date__gte=parsed)
+        else:
+            date_from = ""
+    if date_to:
+        parsed = parse_date(date_to)
+        if parsed:
+            qs = qs.filter(work_completed_at__date__lte=parsed)
+        else:
+            date_to = ""
 
     context = {
         "reports": qs,
@@ -44,6 +59,8 @@ def report_list(request):
         "q": query,
         "selected_department": dept,
         "selected_status": status,
+        "date_from": date_from,
+        "date_to": date_to,
         "total": ReturnToServiceReport.objects.count(),
     }
     return render(request, "reports/report_list.html", context)

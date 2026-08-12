@@ -23,7 +23,18 @@
       <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
     {% endfor %}
   </select>
+  <label class="filter-date">
+    <span>Completed from</span>
+    <input type="date" name="date_from" value="{{ date_from }}" onchange="this.form.submit()">
+  </label>
+  <label class="filter-date">
+    <span>to</span>
+    <input type="date" name="date_to" value="{{ date_to }}" onchange="this.form.submit()">
+  </label>
   <button class="btn btn-ghost" type="submit">Filter</button>
+  {% if q or selected_department or selected_status or date_from or date_to %}
+    <a class="btn btn-ghost" href="{% url 'reports:list' %}">Clear</a>
+  {% endif %}
 </form>
 
 {% if reports %}
