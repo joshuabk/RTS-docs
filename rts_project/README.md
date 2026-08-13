@@ -60,9 +60,23 @@ user accounts are also available in the Django admin at `/admin/`.
   templates, and the stylesheet (`reports/static/reports/app.css`)
 - `reports/management/commands/seed_demo.py` — demo data
 
+## Static files (CSS) in production
+Django only serves `/static/` itself under `manage.py runserver`. Behind a real
+WSGI server (waitress, gunicorn, IIS, mod_wsgi) it does not — which is why the
+stylesheet goes missing there. [WhiteNoise](https://whitenoise.readthedocs.io/)
+handles it instead; it's wired into `MIDDLEWARE` right after `SecurityMiddleware`.
+
+On the production server:
+```bash
+pip install -r requirements.txt     # installs whitenoise
+python manage.py collectstatic --noinput
+```
+then restart the service. Re-run `collectstatic` after any change to
+`reports/static/`. Files are gathered into `staticfiles/` (gitignored).
+
 ## Production notes
 This ships with development defaults. Before deploying: set `DEBUG = False`,
 move `SECRET_KEY` to an environment variable, set `ALLOWED_HOSTS`, serve over
-HTTPS, run `collectstatic`, and consider Postgres instead of SQLite. Because
+HTTPS, and consider Postgres instead of SQLite. Because
 these reports support clinical QA, ensure your deployment meets your
 institution's record-retention, access-control, and audit requirements.
