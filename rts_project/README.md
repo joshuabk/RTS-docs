@@ -25,10 +25,24 @@ python manage.py migrate
 python manage.py seed_demo        # demo departments/machines/report + admin user
 python manage.py runserver
 ```
-Open http://127.0.0.1:8000/ and sign in.
+Open http://127.0.0.1:8000/ — the app opens straight to the report list.
 
-Demo credentials from `seed_demo`: **admin / changeme123** (change immediately).
-To create your own admin instead: `python manage.py createsuperuser`.
+## Turning the login screen on or off
+One switch near the bottom of `config/settings.py`:
+
+```python
+REQUIRE_LOGIN = False   # False = no sign-in required (current default)
+                        # True  = every page requires a sign-in
+```
+
+Restart the server after changing it. With `False`, all report and clinic/machine
+pages are open to anyone who can reach the server — run it only on a trusted network.
+With `True`, visitors are redirected to the login screen and sent back to the page
+they asked for after signing in.
+
+The Django admin at `/admin/` requires a login either way. Demo credentials from
+`seed_demo`: **admin / changeme123** (change immediately). To create your own admin
+instead: `python manage.py createsuperuser`.
 
 ## Managing clinics and machines (selection options)
 Use the in-app **Clinics & machines** page (top nav) to add the clinics and machines

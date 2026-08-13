@@ -13,18 +13,18 @@
       <span class="brand-mark" aria-hidden="true"></span>
       <span class="brand-text">RTS Register<small>Return-to-Service Documentation</small></span>
     </a>
-    {% if user.is_authenticated %}
     <nav class="topnav">
       <a href="{% url 'reports:list' %}">Reports</a>
       <a href="{% url 'reports:manage' %}">Clinics &amp; Machines</a>
       <a class="btn btn-primary" href="{% url 'reports:create' %}">New report</a>
+      {% if user.is_authenticated %}
       <form method="post" action="{% url 'logout' %}" class="logout-form">
         {% csrf_token %}
         <span class="who">{{ user.get_username }}</span>
         <button type="submit" class="linkbtn">Sign out</button>
       </form>
+      {% endif %}
     </nav>
-    {% endif %}
   </header>
   <main class="wrap">
     {% block content %}{% endblock %}

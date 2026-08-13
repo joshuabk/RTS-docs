@@ -48,6 +48,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Enforces REQUIRE_LOGIN (see bottom of this file).
+    # Must stay after AuthenticationMiddleware.
+    'reports.middleware.LoginRequiredMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -122,6 +125,17 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ---------------------------------------------------------------------------
+# LOGIN ON/OFF SWITCH
+#
+#   True  = every page requires a sign-in (login screen appears)
+#   False = the whole site is open, no sign-in required
+#
+# Restart the server after changing this. The Django admin at /admin/ always
+# requires a login either way.
+# ---------------------------------------------------------------------------
+REQUIRE_LOGIN = False
 
 # --- Auth redirects ---
 LOGIN_URL = "login"

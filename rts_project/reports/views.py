@@ -1,5 +1,4 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -17,7 +16,6 @@ from django.db.models.deletion import ProtectedError
 from django.urls import reverse
 
 
-@login_required
 def report_list(request):
     qs = ReturnToServiceReport.objects.select_related(
         "machine", "machine__department"
@@ -66,7 +64,6 @@ def report_list(request):
     return render(request, "reports/report_list.html", context)
 
 
-@login_required
 def report_detail(request, pk):
     report = get_object_or_404(
         ReturnToServiceReport.objects.select_related(
@@ -77,13 +74,12 @@ def report_detail(request, pk):
     return render(request, "reports/report_detail.html", {"report": report})
 
 
-@login_required
 def report_create(request):
     if request.method == "POST":
         form = ReturnToServiceReportForm(request.POST)
         if form.is_valid():
             report = form.save(commit=False)
-            report.created_by = request.user
+            report.created_by = request.user if request.user.is_authenticated else None
             report.save()
             return redirect(report)
     else:
@@ -100,7 +96,6 @@ def report_create(request):
     )
 
 
-@login_required
 def report_edit(request, pk):
     report = get_object_or_404(ReturnToServiceReport, pk=pk)
     if request.method == "POST":
@@ -123,7 +118,6 @@ def report_edit(request, pk):
     )
 
 
-@login_required
 def report_pdf(request, pk):
     report = get_object_or_404(
         ReturnToServiceReport.objects.select_related(
@@ -139,7 +133,6 @@ def report_pdf(request, pk):
 
 # --- Clinic & machine management (selection options) ---
 
-@login_required
 def manage(request):
     clinics = (
         Department.objects.annotate(machine_count=Count("machines"))
@@ -158,7 +151,6 @@ def manage(request):
     )
 
 
-@login_required
 def clinic_create(request):
     if request.method == "POST":
         form = ClinicForm(request.POST)
@@ -182,7 +174,6 @@ def clinic_create(request):
         )
     return redirect("reports:manage")
 
-@login_required
 def clinic_edit(request, pk):
     clinic = get_object_or_404(Department, pk=pk)
     if request.method == "POST":
@@ -200,7 +191,6 @@ def clinic_edit(request, pk):
     )
 
 
-@login_required
 def clinic_delete(request, pk):
     clinic = get_object_or_404(Department, pk=pk)
     machine_count = clinic.machines.count()
@@ -242,7 +232,6 @@ def clinic_delete(request, pk):
 
 
 
-@login_required
 def machine_create(request):
     if request.method == "POST":
         form = MachineForm(request.POST)
@@ -267,7 +256,6 @@ def machine_create(request):
         )
     return redirect("reports:manage")
 
-@login_required
 def machine_edit(request, pk):
     machine = get_object_or_404(Machine, pk=pk)
     if request.method == "POST":
@@ -285,7 +273,6 @@ def machine_edit(request, pk):
     )
 
 
-@login_required
 def machine_delete(request, pk):
     machine = get_object_or_404(Machine, pk=pk)
     report_count = machine.rts_reports.count()
@@ -325,7 +312,6 @@ def machine_delete(request, pk):
     )
 
 
-@login_required
 def machines_for_clinic(request):
     """JSON: machines belonging to a clinic, for the dependent dropdown."""
     clinic_id = request.GET.get("clinic")
