@@ -20,9 +20,11 @@ class MachineAdmin(admin.ModelAdmin):
 class ReturnToServiceReportAdmin(admin.ModelAdmin):
     list_display = (
         "reference", "machine", "status", "physics_status",
-        "work_completed_at", "approved_by",
+        "outage_start", "work_completed_at", "approved_by",
     )
     list_filter = ("status", "physics_status", "machine__department")
-    search_fields = ("machine__name", "work_performed", "approved_by", "performed_by")
+    search_fields = (
+        "machine__name", "outage_issue", "work_performed", "approved_by", "performed_by",
+    )
     readonly_fields = ("created_at", "updated_at", "approval_date")
-    date_hierarchy = "work_completed_at"
+    date_hierarchy = "outage_start"

@@ -142,10 +142,14 @@ def build_report_pdf(report):
     story.append(Paragraph("Outage &amp; work", section))
     story.append(pair_table([
         ("OUTAGE START", _fmt(report.outage_start), mono),
-        ("WORK COMPLETED", _fmt(report.work_completed_at), mono),
+        ("WORK COMPLETED",
+         _fmt(report.work_completed_at) if report.work_completed_at else "Not yet completed", mono),
         ("WORK PERFORMED BY", report.performed_by, value),
-        ("VENDOR DOCUMENTATION", report.vendor_doc_url, mono),
+        ("VENDOR REPORT RECEIVED", "Yes" if report.vendor_report_received else "No", value),
     ]))
+    story.append(Paragraph("OUTAGE ISSUE", label))
+    story.append(Paragraph((report.outage_issue or "\u2014").replace("\n", "<br/>"), value))
+    story.append(Spacer(1, 6))
     story.append(Paragraph("WORK PERFORMED", label))
     story.append(Paragraph((report.work_performed or "\u2014").replace("\n", "<br/>"), value))
 

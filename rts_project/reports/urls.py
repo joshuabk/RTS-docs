@@ -10,6 +10,7 @@ urlpatterns = [
     path("<int:pk>/", views.report_detail, name="detail"),
     path("<int:pk>/edit/", views.report_edit, name="edit"),
     path("<int:pk>/pdf/", views.report_pdf, name="pdf"),
+    path("<int:pk>/delete/", views.report_delete, name="delete"),
     # Clinic & machine management
     path("manage/", views.manage, name="manage"),
     path("manage/clinics/add/", views.clinic_create, name="clinic_create"),

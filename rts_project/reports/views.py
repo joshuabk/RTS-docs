@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.dateparse import parse_date
@@ -20,21 +20,22 @@ def report_list(request):
     qs = ReturnToServiceReport.objects.select_related(
         "machine", "machine__department"
     )
-    query = request.GET.get("q", "").strip()
     dept = request.GET.get("department", "").strip()
+    machine_id = request.GET.get("machine", "").strip()
     status = request.GET.get("status", "").strip()
     date_from = request.GET.get("date_from", "").strip()
     date_to = request.GET.get("date_to", "").strip()
 
-    if query:
-        qs = qs.filter(
-            Q(machine__name__icontains=query)
-            | Q(work_performed__icontains=query)
-            | Q(approved_by__icontains=query)
-            | Q(performed_by__icontains=query)
-        )
+    # Machine options follow the clinic filter; a machine from another
+    # clinic (left over after the clinic changed) is ignored.
+    machines = Machine.objects.select_related("department")
     if dept:
         qs = qs.filter(machine__department_id=dept)
+        machines = machines.filter(department_id=dept)
+    if machine_id and not machines.filter(pk=machine_id).exists():
+        machine_id = ""
+    if machine_id:
+        qs = qs.filter(machine_id=machine_id)
     if status:
         qs = qs.filter(status=status)
     if date_from:
@@ -53,9 +54,10 @@ def report_list(request):
     context = {
         "reports": qs,
         "departments": Department.objects.all(),
+        "machines": machines,
         "status_choices": ReturnToServiceReport.Status.choices,
-        "q": query,
         "selected_department": dept,
+        "selected_machine": machine_id,
         "selected_status": status,
         "date_from": date_from,
         "date_to": date_to,
@@ -129,6 +131,31 @@ def report_pdf(request, pk):
     response = HttpResponse(buffer, content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="{report.reference}.pdf"'
     return response
+
+
+def report_delete(request, pk):
+    report = get_object_or_404(
+        ReturnToServiceReport.objects.select_related("machine", "machine__department"),
+        pk=pk,
+    )
+    if request.method == "POST":
+        reference = report.reference
+        report.delete()
+        messages.success(request, f"Report {reference} deleted.")
+        return redirect("reports:list")
+    return render(
+        request,
+        "reports/confirm_delete.html",
+        {
+            "kind": "report",
+            "object_name": f"{report.reference} — {report.machine.name}",
+            "detail": report.machine.department.name,
+            "eyebrow": "Return-to-service register",
+            "back_url": report.get_absolute_url(),
+            "back_label": f"← {report.reference}",
+            "action_url": reverse("reports:delete", args=[report.pk]),
+        },
+    )
 
 
 # --- Clinic & machine management (selection options) ---

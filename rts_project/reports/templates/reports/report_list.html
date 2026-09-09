@@ -9,32 +9,57 @@
   <span class="count">{{ reports|length }} shown · {{ total }} total</span>
 </div>
 
+{% if messages %}
+  {% for m in messages %}<div class="flash flash-{{ m.tags }}">{{ m }}</div>{% endfor %}
+{% endif %}
+
 <form class="filters" method="get">
-  <input type="search" name="q" value="{{ q }}" placeholder="Search machine, work, approver…">
-  <select name="department" onchange="this.form.submit()">
-    <option value="">All departments</option>
-    {% for d in departments %}
-      <option value="{{ d.id }}" {% if selected_department == d.id|stringformat:'s' %}selected{% endif %}>{{ d.name }}</option>
-    {% endfor %}
-  </select>
-  <select name="status" onchange="this.form.submit()">
-    <option value="">Any status</option>
-    {% for value, label in status_choices %}
-      <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
-    {% endfor %}
-  </select>
-  <label class="filter-date">
-    <span>Completed from</span>
-    <input type="date" name="date_from" value="{{ date_from }}" onchange="this.form.submit()">
-  </label>
-  <label class="filter-date">
-    <span>to</span>
-    <input type="date" name="date_to" value="{{ date_to }}" onchange="this.form.submit()">
-  </label>
-  <button class="btn btn-ghost" type="submit">Filter</button>
-  {% if q or selected_department or selected_status or date_from or date_to %}
-    <a class="btn btn-ghost" href="{% url 'reports:list' %}">Clear</a>
-  {% endif %}
+  <div class="filter-row">
+    <select name="department" onchange="this.form.submit()" aria-label="Clinic">
+      <option value="">Clinics</option>
+      {% for d in departments %}
+        <option value="{{ d.id }}" {% if selected_department == d.id|stringformat:'s' %}selected{% endif %}>{{ d.name }}</option>
+      {% endfor %}
+    </select>
+    <select name="machine" onchange="this.form.submit()" aria-label="Machine">
+      <option value="">Machines</option>
+      {% if selected_department %}
+        {% for m in machines %}
+          <option value="{{ m.id }}" {% if selected_machine == m.id|stringformat:'s' %}selected{% endif %}>{{ m.name }}</option>
+        {% endfor %}
+      {% else %}
+        {% regroup machines by department as by_clinic %}
+        {% for group in by_clinic %}
+          <optgroup label="{{ group.grouper.name }}">
+            {% for m in group.list %}
+              <option value="{{ m.id }}" {% if selected_machine == m.id|stringformat:'s' %}selected{% endif %}>{{ m.name }}</option>
+            {% endfor %}
+          </optgroup>
+        {% endfor %}
+      {% endif %}
+    </select>
+    <select name="status" onchange="this.form.submit()" aria-label="Status">
+      <option value="">Any status</option>
+      {% for value, label in status_choices %}
+        <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    {% if selected_department or selected_machine or selected_status or date_from or date_to %}
+      <a class="btn btn-ghost" href="{% url 'reports:list' %}">Clear all</a>
+    {% endif %}
+  </div>
+  <fieldset class="filter-dates">
+    <legend>Work completed date</legend>
+    <label class="filter-date">
+      <span>From</span>
+      <input type="date" name="date_from" value="{{ date_from }}">
+    </label>
+    <label class="filter-date">
+      <span>To</span>
+      <input type="date" name="date_to" value="{{ date_to }}">
+    </label>
+    <button class="btn btn-primary btn-sm" type="submit">Filter dates</button>
+  </fieldset>
 </form>
 
 {% if reports %}
@@ -51,7 +76,8 @@
     <h3>{{ r.machine.name }}</h3>
     <div class="rcard-meta">
       <span>{{ r.machine.department.name }}</span>
-      <span class="mono">Completed {{ r.work_completed_at|date:"d M Y, H:i" }}</span>
+      <span class="mono">Down since {{ r.outage_start|date:"d M Y, H:i" }}</span>
+      {% if r.work_completed_at %}<span class="mono">Completed {{ r.work_completed_at|date:"d M Y, H:i" }}</span>{% else %}<span class="pending">Work in progress</span>{% endif %}
       {% if r.approved_by %}<span>Approved by {{ r.approved_by }}</span>{% endif %}
     </div>
   </a>
@@ -60,7 +86,7 @@
 {% else %}
 <div class="empty">
   <h2>No reports yet</h2>
-  <p>Create the first return-to-service record when a machine comes back online.</p>
+  <p>Open a record as soon as a machine goes out of service; complete it when the machine comes back online.</p>
   <a class="btn btn-primary" href="{% url 'reports:create' %}">New report</a>
 </div>
 {% endif %}

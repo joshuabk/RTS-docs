@@ -6,13 +6,22 @@ reports documenting a machine's return to clinical service after an outage.
 ## What it captures
 Each report records:
 - **Machine & department** — which machine was down and where it lives
-- **Outage start / work completed** — the timeline
+- **Outage start / outage issue** — when the machine went down and why (required to open a report)
+- **Work completed** — the timeline (filled in once the repair is done)
 - **What was worked on** — fault and repair description, plus who performed the work
 - **Physics evaluation** — status (not required / performed / pending), the evaluation
   performed, and the responsible medical physicist
 - **Return-to-service approval** — approver name/role (approval date is stamped
   automatically)
-- **Vendor documentation link** — URL to the vendor's service report
+- **Vendor report received** — checkbox recording that the vendor's service report has been received
+
+A report can be **opened as soon as a machine goes out of service** — only the clinic,
+machine, outage start and outage issue are required to save it. The remaining fields
+(work completed, work performed, physics evaluation, approval) can be filled in later as
+the repair progresses. Report status moves through **Pending → Service complete →
+Returned to treatment**: work completed and work performed are required for *Service
+complete*, and an approver (with no pending physics evaluation) is required for
+*Returned to treatment*.
 
 Reports are **saved in the database** and can be **exported to a print-ready PDF**
 (one report per file, suitable for a QA binder or document-management system).

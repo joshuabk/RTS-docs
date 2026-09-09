@@ -47,6 +47,10 @@ class Command(BaseCommand):
             ReturnToServiceReport.objects.create(
                 machine=tb,
                 outage_start=now - timedelta(days=1, hours=6),
+                outage_issue=(
+                    "Intermittent MLC interlock faults during treatment; machine "
+                    "taken out of service pending vendor inspection."
+                ),
                 work_completed_at=now - timedelta(hours=3),
                 work_performed=(
                     "Multileaf collimator carriage motor replaced after intermittent "
@@ -60,7 +64,7 @@ class Command(BaseCommand):
                 ),
                 physicist="Dr. R. Okafor, DABR",
                 approved_by="Dr. R. Okafor, Chief Physicist",
-                vendor_doc_url="https://service.varian.example.com/cases/884213",
+                vendor_report_received=True,
                 status=ReturnToServiceReport.Status.RETURNED,
             )
             self.stdout.write(self.style.SUCCESS("Created a sample report."))

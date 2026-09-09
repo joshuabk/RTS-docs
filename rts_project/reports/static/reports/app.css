@@ -79,12 +79,24 @@ body {
 .count { font-family: var(--mono); font-size: .8rem; color: var(--muted); }
 
 /* Filter bar */
-.filters { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+.filters { display: flex; flex-direction: column; gap: .7rem; margin-bottom: 1.2rem; }
+.filter-row { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
+.filter-row select { flex: 1 1 180px; }
+.filter-dates {
+  display: flex; gap: .8rem; flex-wrap: wrap; align-items: center;
+  margin: 0; padding: .65rem .9rem;
+  border: 1px dashed var(--petrol); border-radius: 10px;
+  background: var(--paper, #f3f6f4);
+}
+.filter-dates legend {
+  padding: 0 .4rem; font-size: .72rem; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--petrol);
+}
+.btn-sm { padding: .4rem .8rem; font-size: .85rem; }
 .filters input, .filters select {
   font: inherit; font-size: .9rem; padding: .5rem .7rem; border: 1px solid var(--line);
   border-radius: 8px; background: var(--surface); color: var(--ink);
 }
-.filters input { min-width: 220px; flex: 1; }
 .filters input:focus, .filters select:focus { outline: 2px solid var(--petrol); outline-offset: 1px; border-color: var(--petrol); }
 .filters .filter-date { display: inline-flex; align-items: center; gap: .45rem; font-size: .85rem; color: var(--muted, #667); }
 .filters .filter-date input[type="date"] { min-width: 0; flex: 0 0 auto; }
@@ -97,7 +109,7 @@ body {
 }
 .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .pill-returned { background: var(--green-bg); color: var(--green); }
-.pill-draft { background: var(--slate-bg); color: var(--muted); }
+.pill-service_complete { background: var(--slate-bg); color: var(--petrol); }
 .pill-performed { background: var(--green-bg); color: var(--green); }
 .pill-pending { background: var(--amber-bg); color: var(--amber); }
 .pill-not_required { background: var(--slate-bg); color: var(--muted); }
@@ -132,7 +144,6 @@ body {
 .field .val.mono { font-family: var(--mono); font-size: .9rem; }
 .field.full { grid-column: 1 / -1; }
 .prose { white-space: pre-wrap; font-size: .96rem; line-height: 1.55; }
-.docfield a { color: var(--petrol); word-break: break-all; }
 .actions { display: flex; gap: .6rem; flex-wrap: wrap; }
 
 /* Forms */
@@ -195,3 +206,25 @@ textarea.form-control { resize: vertical; }
 .btn-danger { background: var(--red); color: #fff; }
 .btn-danger:hover { background: #8d3325; }
 .machine-list li { align-items: center; }
+
+/* Required-field marker and in-progress indicator */
+.req { color: #b4453a; font-weight: 700; }
+.pending { color: var(--amber); font-weight: 600; font-style: italic; }
+
+/* Checkbox rows */
+.form-row-check { justify-content: flex-end; }
+.check-label { display: flex; align-items: center; gap: .55rem; cursor: pointer; font-weight: 500; }
+.form-check { width: 1.1rem; height: 1.1rem; accent-color: var(--petrol); margin: 0; }
+
+.actions .push-right { margin-left: auto; }
+
+/* Confirmation pop-up */
+.confirm-dialog {
+  border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 1.4rem 1.6rem; max-width: 420px; width: calc(100% - 2rem);
+  background: var(--surface); color: var(--ink);
+}
+.confirm-dialog::backdrop { background: rgba(22, 48, 44, .45); }
+.confirm-dialog h2 { margin: 0 0 .6rem; font-size: 1.15rem; }
+.confirm-dialog p { margin: 0 0 .5rem; }
+.confirm-dialog .form-actions { margin-top: 1rem; }

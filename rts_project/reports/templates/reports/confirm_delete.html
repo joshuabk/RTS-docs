@@ -2,10 +2,10 @@
 {% block title %}Delete {{ kind }}{% endblock %}
 {% block content %}
 <div class="actions" style="margin-bottom:1rem;">
-  <a class="btn btn-ghost" href="{% url 'reports:manage' %}">← Clinics &amp; machines</a>
+  <a class="btn btn-ghost" href="{% if back_url %}{{ back_url }}{% else %}{% url 'reports:manage' %}{% endif %}">{% if back_label %}{{ back_label }}{% else %}← Clinics &amp; machines{% endif %}</a>
 </div>
 
-<div class="page-head"><div><p class="eyebrow">Setup</p><h1>Delete {{ kind }}</h1></div></div>
+<div class="page-head"><div><p class="eyebrow">{{ eyebrow|default:"Setup" }}</p><h1>Delete {{ kind }}</h1></div></div>
 
 <div class="formcard" style="max-width:520px;">
   <p>You are about to delete the {{ kind }}
@@ -14,7 +14,7 @@
   {% if blocked_reason %}
     <div class="nonfield">{{ blocked_reason }}</div>
     <div class="form-actions">
-      <a class="btn btn-ghost" href="{% url 'reports:manage' %}">Back</a>
+      <a class="btn btn-ghost" href="{% if back_url %}{{ back_url }}{% else %}{% url 'reports:manage' %}{% endif %}">Back</a>
     </div>
   {% else %}
     <p class="help">This can’t be undone.</p>
@@ -22,7 +22,7 @@
       {% csrf_token %}
       <div class="form-actions">
         <button type="submit" class="btn btn-danger">Delete {{ kind }}</button>
-        <a class="btn btn-ghost" href="{% url 'reports:manage' %}">Cancel</a>
+        <a class="btn btn-ghost" href="{% if back_url %}{{ back_url }}{% else %}{% url 'reports:manage' %}{% endif %}">Cancel</a>
       </div>
     </form>
   {% endif %}

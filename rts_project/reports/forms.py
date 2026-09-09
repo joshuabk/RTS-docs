@@ -21,7 +21,12 @@ class _DateTimeInput(forms.DateTimeInput):
 def _style(fields):
     """Apply consistent CSS classes to a set of bound form fields."""
     for field in fields.values():
-        css = "form-select" if isinstance(field.widget, forms.Select) else "form-control"
+        if isinstance(field.widget, forms.CheckboxInput):
+            css = "form-check"
+        elif isinstance(field.widget, forms.Select):
+            css = "form-select"
+        else:
+            css = "form-control"
         field.widget.attrs.setdefault("class", css)
 
 
@@ -68,6 +73,7 @@ class ReturnToServiceReportForm(forms.ModelForm):
             "clinic",
             "machine",
             "outage_start",
+            "outage_issue",
             "work_completed_at",
             "work_performed",
             "performed_by",
@@ -75,21 +81,23 @@ class ReturnToServiceReportForm(forms.ModelForm):
             "physics_evaluation",
             "physicist",
             "approved_by",
-            "vendor_doc_url",
+            "vendor_report_received",
             "status",
         ]
         widgets = {
             "outage_start": _DateTimeInput(),
             "work_completed_at": _DateTimeInput(),
+            "outage_issue": forms.Textarea(attrs={"rows": 3}),
             "work_performed": forms.Textarea(attrs={"rows": 4}),
             "physics_evaluation": forms.Textarea(attrs={"rows": 4}),
         }
         labels = {
+            "outage_issue": "Outage issue",
             "work_completed_at": "Work completed",
             "performed_by": "Work performed by",
             "physics_status": "Physics evaluation",
             "physics_evaluation": "Physics evaluation performed",
-            "vendor_doc_url": "Vendor documentation link",
+            "vendor_report_received": "Vendor report received",
             "approved_by": "Return to service approved by",
         }
 
@@ -103,6 +111,18 @@ class ReturnToServiceReportForm(forms.ModelForm):
         self.order_fields(order)
 
         self.fields["machine"].empty_label = "Select a machine…"
+
+        # A report can be opened as soon as the machine goes down. Only the
+        # clinic, machine, outage start and outage issue are required up front;
+        # everything else is filled in as the repair progresses.
+        # (Select fields such as status keep their defaults and stay required.)
+        for name in (
+            "work_completed_at", "work_performed", "performed_by",
+            "physics_evaluation", "physicist", "approved_by", "vendor_report_received",
+        ):
+            self.fields[name].required = False
+        for name in ("clinic", "machine", "outage_start", "outage_issue"):
+            self.fields[name].required = True
 
         # Determine which clinic is in play, so the machine <select> only
         # shows that clinic's machines (works even with JavaScript disabled).
@@ -149,15 +169,28 @@ class ReturnToServiceReportForm(forms.ModelForm):
                 "Describe the physics evaluation that was performed.",
             )
 
-        if cleaned.get("status") == ReturnToServiceReport.Status.RETURNED:
+        Status = ReturnToServiceReport.Status
+        report_status = cleaned.get("status")
+        if report_status in (Status.SERVICE_COMPLETE, Status.RETURNED):
+            if not done:
+                self.add_error(
+                    "work_completed_at",
+                    "Record when the work was completed before marking service complete.",
+                )
+            if not cleaned.get("work_performed"):
+                self.add_error(
+                    "work_performed",
+                    "Describe the work performed before marking service complete.",
+                )
+        if report_status == Status.RETURNED:
             if not cleaned.get("approved_by"):
                 self.add_error(
                     "approved_by",
-                    "An approver is required before a machine can be returned to service.",
+                    "An approver is required before a machine can be returned to treatment.",
                 )
             if status == ReturnToServiceReport.PhysicsStatus.PENDING:
                 self.add_error(
                     "physics_status",
-                    "Physics evaluation is still pending; resolve it before returning to service.",
+                    "Physics evaluation is still pending; resolve it before returning to treatment.",
                 )
         return cleaned

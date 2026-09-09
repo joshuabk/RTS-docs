@@ -60,8 +60,9 @@ class ReturnToServiceReport(models.Model):
         PENDING = "pending", "Required - pending"
 
     class Status(models.TextChoices):
-        DRAFT = "draft", "Draft"
-        RETURNED = "returned", "Returned to service"
+        PENDING = "pending", "Pending"
+        SERVICE_COMPLETE = "service_complete", "Service complete"
+        RETURNED = "returned", "Returned to treatment"
 
     # --- Which machine and where ---
     machine = models.ForeignKey(
@@ -70,16 +71,20 @@ class ReturnToServiceReport(models.Model):
 
     # --- Outage / work timeline ---
     outage_start = models.DateTimeField(
-        null=True, blank=True,
         help_text="When the machine went out of service.",
     )
+    outage_issue = models.TextField(
+        help_text="What went wrong - the fault or reason the machine was taken out of service.",
+    )
     work_completed_at = models.DateTimeField(
-        help_text="When repair / maintenance work was completed.",
+        null=True, blank=True,
+        help_text="When repair / maintenance work was completed. Leave blank while work is ongoing.",
     )
 
     # --- What was worked on ---
     work_performed = models.TextField(
-        help_text="Description of the fault and the repair / maintenance performed.",
+        blank=True,
+        help_text="Description of the repair / maintenance performed.",
     )
     performed_by = models.CharField(
         max_length=160, blank=True,
@@ -108,14 +113,14 @@ class ReturnToServiceReport(models.Model):
     approval_date = models.DateTimeField(null=True, blank=True)
 
     # --- Vendor documentation ---
-    vendor_doc_url = models.CharField(
-        "Vendor documentation link",max_length=160, blank=True,
-        help_text="Link to the vendor's service report / documentation of the repair.",
+    vendor_report_received = models.BooleanField(
+        "Vendor report received", default=False,
+        help_text="Tick once the vendor's service report / documentation has been received.",
     )
 
     # --- Workflow / audit ---
     status = models.CharField(
-        max_length=12, choices=Status.choices, default=Status.DRAFT,
+        max_length=20, choices=Status.choices, default=Status.PENDING,
     )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
@@ -125,7 +130,7 @@ class ReturnToServiceReport(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-work_completed_at", "-created_at"]
+        ordering = ["-outage_start", "-created_at"]
         verbose_name = "return-to-service report"
 
     def __str__(self):
@@ -150,6 +155,11 @@ class ReturnToServiceReport(models.Model):
     @property
     def is_returned(self):
         return self.status == self.Status.RETURNED
+
+    @property
+    def is_in_progress(self):
+        """Report was submitted before repair work was completed."""
+        return self.work_completed_at is None
 
     def save(self, *args, **kwargs):
         # Stamp approval date the first time an approver is recorded.

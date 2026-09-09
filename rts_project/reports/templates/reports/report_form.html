@@ -11,14 +11,21 @@
   <a href="{% url 'reports:manage' %}">Clinics &amp; machines</a> page first.</div>
 {% endif %}
 
+<p class="help" style="margin:0 0 1rem;">A report can be opened as soon as a machine goes down. Only the fields marked
+  <span class="req">*</span> are needed to save it; the rest can be completed as the repair progresses.</p>
+
 <form method="post" class="formcard" novalidate>
   {% csrf_token %}
   {% if form.non_field_errors %}<div class="nonfield">{{ form.non_field_errors }}</div>{% endif %}
   <div class="form-grid">
     {% for field in form %}
-      <div class="form-row {% if field.name in 'work_performed physics_evaluation vendor_doc_url' %}full{% endif %}">
-        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-        {{ field }}
+      <div class="form-row {% if field.name in 'outage_issue work_performed physics_evaluation' %}full{% endif %}{% if field.field.widget.input_type == 'checkbox' %} form-row-check{% endif %}">
+        {% if field.field.widget.input_type == 'checkbox' %}
+          <label for="{{ field.id_for_label }}" class="check-label">{{ field }} <span>{{ field.label }}</span></label>
+        {% else %}
+          <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="req">*</span>{% endif %}</label>
+          {{ field }}
+        {% endif %}
         {% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}
         {% if field.errors %}<ul class="errlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
       </div>

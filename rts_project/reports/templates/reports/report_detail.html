@@ -33,13 +33,12 @@
   <div class="section">
     <h2>Outage &amp; work</h2>
     <div class="grid">
-      <div class="field"><div class="lbl">Outage start</div><div class="val mono">{{ report.outage_start|date:"d M Y, H:i"|default:"—" }}</div></div>
-      <div class="field"><div class="lbl">Work completed</div><div class="val mono">{{ report.work_completed_at|date:"d M Y, H:i" }}</div></div>
+      <div class="field"><div class="lbl">Outage start</div><div class="val mono">{{ report.outage_start|date:"d M Y, H:i" }}</div></div>
+      <div class="field"><div class="lbl">Work completed</div><div class="val mono">{% if report.work_completed_at %}{{ report.work_completed_at|date:"d M Y, H:i" }}{% else %}<span class="pending">Not yet completed</span>{% endif %}</div></div>
+      <div class="field full"><div class="lbl">Outage issue</div><div class="val prose">{{ report.outage_issue }}</div></div>
       <div class="field"><div class="lbl">Work performed by</div><div class="val">{{ report.performed_by|default:"—" }}</div></div>
-      <div class="field docfield"><div class="lbl">Vendor documentation</div><div class="val">
-        {% if report.vendor_doc_url %}<a href="{{ report.vendor_doc_url }}" target="_blank" rel="noopener">{{ report.vendor_doc_url }}</a>{% else %}—{% endif %}
-      </div></div>
-      <div class="field full"><div class="lbl">What was worked on</div><div class="val prose">{{ report.work_performed }}</div></div>
+      <div class="field"><div class="lbl">Vendor report received</div><div class="val">{% if report.vendor_report_received %}Yes{% else %}<span class="pending">No</span>{% endif %}</div></div>
+      <div class="field full"><div class="lbl">Work performed</div><div class="val prose">{{ report.work_performed|default:"—" }}</div></div>
     </div>
   </div>
 
@@ -63,6 +62,31 @@
   <div class="section actions">
     <a class="btn btn-primary" href="{% url 'reports:pdf' report.pk %}">Download PDF</a>
     <a class="btn btn-ghost" href="{% url 'reports:edit' report.pk %}">Edit report</a>
+    <a class="btn btn-danger push-right" id="delete-report-btn" style="margin-left:auto;" href="{% url 'reports:delete' report.pk %}">Delete report</a>
   </div>
 </article>
+
+<dialog id="delete-dialog" class="confirm-dialog">
+  <form method="post" action="{% url 'reports:delete' report.pk %}">
+    {% csrf_token %}
+    <h2>Delete this report?</h2>
+    <p><strong>{{ report.reference }}</strong> — {{ report.machine.name }}, {{ report.machine.department.name }}</p>
+    <p class="help">This permanently removes the report and can’t be undone.</p>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-danger">Delete report</button>
+      <button type="button" class="btn btn-ghost" id="delete-cancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(function () {
+  var btn = document.getElementById("delete-report-btn");
+  var dlg = document.getElementById("delete-dialog");
+  if (!btn || !dlg || typeof dlg.showModal !== "function") return;  // falls back to the confirmation page
+  btn.addEventListener("click", function (e) { e.preventDefault(); dlg.showModal(); });
+  document.getElementById("delete-cancel").addEventListener("click", function () { dlg.close(); });
+  dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
+})();
+</script>
 {% endblock %}
