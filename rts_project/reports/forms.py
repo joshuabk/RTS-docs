@@ -97,8 +97,9 @@ class ReturnToServiceReportForm(forms.ModelForm):
             "performed_by": "Work performed by",
             "physics_status": "Physics evaluation",
             "physics_evaluation": "Physics evaluation performed",
+            "physicist": "Evaluator",
             "vendor_report_received": "Vendor report received",
-            "approved_by": "Return to service approved by",
+            "approved_by": "Approving physicist",
         }
 
     def __init__(self, *args, **kwargs):

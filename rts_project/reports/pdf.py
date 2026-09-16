@@ -158,7 +158,7 @@ def build_report_pdf(report):
     story.append(Paragraph("Physics evaluation", section))
     story.append(pair_table([
         ("STATUS", report.get_physics_status_display(), value),
-        ("PHYSICIST", report.physicist, value),
+        ("EVALUATOR", report.physicist, value),
     ]))
     story.append(Paragraph("EVALUATION PERFORMED", label))
     story.append(Paragraph(
@@ -168,7 +168,7 @@ def build_report_pdf(report):
     story.append(HRFlowable(width="100%", thickness=0.6, color=LINE))
     story.append(Paragraph("Approval", section))
     story.append(pair_table([
-        ("RETURN TO SERVICE APPROVED BY", report.approved_by, value),
+        ("APPROVING PHYSICIST", report.approved_by, value),
         ("APPROVAL DATE", _fmt(report.approval_date), mono),
     ]))
 
