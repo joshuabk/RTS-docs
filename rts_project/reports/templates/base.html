@@ -15,7 +15,7 @@
     </a>
     <nav class="topnav">
       <a href="{% url 'reports:list' %}">Reports</a>
-      <a href="{% url 'reports:manage' %}">Clinics &amp; Machines</a>
+      <a href="{% url 'reports:manage' %}">Admin Login</a>
       <a class="btn btn-primary" href="{% url 'reports:create' %}">New report</a>
       {% if user.is_authenticated %}
       <form method="post" action="{% url 'logout' %}" class="logout-form">

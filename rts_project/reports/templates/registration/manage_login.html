@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Admin sign in{% endblock %}
+{% block content %}
+<div class="login-shell">
+  <div class="login-card">
+    <p class="eyebrow">RTS Register · Admin</p>
+    <h1>Admin sign in</h1>
+    <p class="help" style="margin-bottom:1rem;">Managing clinics and machines requires the admin login.</p>
+    {% if error %}
+      <div class="nonfield">{{ error }}</div>
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-row">
+        <label for="id_username">Admin username</label>
+        <input class="form-control" type="text" name="username" id="id_username" autofocus required autocomplete="username">
+      </div>
+      <div class="form-row">
+        <label for="id_password">Admin password</label>
+        <input class="form-control" type="password" name="password" id="id_password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Sign in</button>
+      <input type="hidden" name="next" value="{{ next }}">
+    </form>
+  </div>
+</div>
+{% endblock %}

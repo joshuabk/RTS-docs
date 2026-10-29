@@ -146,6 +146,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ---------------------------------------------------------------------------
 REQUIRE_LOGIN = False
 
+# ---------------------------------------------------------------------------
+# ADMIN LOGIN FOR THE CLINICS & MACHINES PAGES
+#
+# The add/edit/remove clinic and machine pages (/manage/...) always require
+# this separate admin sign-in, regardless of REQUIRE_LOGIN above.
+# Restart the server after changing these.
+# ---------------------------------------------------------------------------
+MANAGE_ADMIN_USERNAME = "RTSadmin"
+MANAGE_ADMIN_PASSWORD = "northsiderts"
+
 # --- Auth redirects ---
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "reports:list"

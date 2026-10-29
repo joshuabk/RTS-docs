@@ -11,10 +11,15 @@ from .forms import (
 )
 from .models import Department, Machine, ReturnToServiceReport
 from .pdf import build_report_pdf
+from .admin_gate import SESSION_KEY, check_credentials, manage_admin_required
 
 from django.db.models.deletion import ProtectedError
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 
+
+
+# rtsadmin,   northsiderts
 
 def report_list(request):
     qs = ReturnToServiceReport.objects.select_related(
@@ -160,6 +165,40 @@ def report_delete(request, pk):
 
 # --- Clinic & machine management (selection options) ---
 
+def _safe_next(request, default):
+    nxt = request.POST.get("next") or request.GET.get("next") or ""
+    if nxt and url_has_allowed_host_and_scheme(
+        nxt, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return nxt
+    return default
+
+
+def manage_login(request):
+    """Admin sign-in required before the clinic & machine pages."""
+    error = ""
+    if request.method == "POST":
+        if check_credentials(
+            request.POST.get("username", "").strip(), request.POST.get("password", "")
+        ):
+            request.session[SESSION_KEY] = True
+            return redirect(_safe_next(request, reverse("reports:manage")))
+        error = "Admin username and password didn't match. Please try again."
+    return render(
+        request,
+        "registration/manage_login.html",
+        {"error": error, "next": request.GET.get("next", "")},
+    )
+
+
+def manage_logout(request):
+    if request.method == "POST":
+        request.session.pop(SESSION_KEY, None)
+        messages.success(request, "Signed out of admin.")
+    return redirect("reports:list")
+
+
+@manage_admin_required
 def manage(request):
     clinics = (
         Department.objects.annotate(machine_count=Count("machines"))
@@ -178,6 +217,7 @@ def manage(request):
     )
 
 
+@manage_admin_required
 def clinic_create(request):
     if request.method == "POST":
         form = ClinicForm(request.POST)
@@ -201,6 +241,7 @@ def clinic_create(request):
         )
     return redirect("reports:manage")
 
+@manage_admin_required
 def clinic_edit(request, pk):
     clinic = get_object_or_404(Department, pk=pk)
     if request.method == "POST":
@@ -218,6 +259,7 @@ def clinic_edit(request, pk):
     )
 
 
+@manage_admin_required
 def clinic_delete(request, pk):
     clinic = get_object_or_404(Department, pk=pk)
     machine_count = clinic.machines.count()
@@ -259,6 +301,7 @@ def clinic_delete(request, pk):
 
 
 
+@manage_admin_required
 def machine_create(request):
     if request.method == "POST":
         form = MachineForm(request.POST)
@@ -283,6 +326,7 @@ def machine_create(request):
         )
     return redirect("reports:manage")
 
+@manage_admin_required
 def machine_edit(request, pk):
     machine = get_object_or_404(Machine, pk=pk)
     if request.method == "POST":
@@ -300,6 +344,7 @@ def machine_edit(request, pk):
     )
 
 
+@manage_admin_required
 def machine_delete(request, pk):
     machine = get_object_or_404(Machine, pk=pk)
     report_count = machine.rts_reports.count()
