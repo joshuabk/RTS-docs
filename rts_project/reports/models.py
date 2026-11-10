@@ -1,5 +1,6 @@
 """Data model for machine return-to-service (RTS) reporting."""
 from django.conf import settings
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -13,9 +14,19 @@ class Department(models.Model):
         help_text="Short identifier shown on reports, e.g. ROC-N.",
     )
     location = models.CharField(max_length=160, blank=True)
+    notification_emails = models.TextField(
+        "Reminder email recipients", blank=True,
+        help_text="Who to email about overdue (not yet completed) reports at this clinic. "
+                  "One address per line or separated by commas.",
+    )
 
     class Meta:
         ordering = ["name"]
+
+    @property
+    def notification_email_list(self):
+        raw = (self.notification_emails or "").replace(";", ",").replace("\n", ",")
+        return [e.strip() for e in raw.split(",") if e.strip()]
 
     def __str__(self):
         return self.name
@@ -117,6 +128,15 @@ class ReturnToServiceReport(models.Model):
         "Vendor report received", default=False,
         help_text="Tick once the vendor's service report / documentation has been received.",
     )
+    vendor_report_url = models.URLField(
+        "Vendor report link", max_length=500, blank=True,
+        help_text="Link to the vendor's service report (e.g. a shared drive or vendor portal).",
+    )
+    vendor_report_file = models.FileField(
+        "Vendor report (PDF)", upload_to="vendor_reports/%Y/%m/", blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=["pdf"])],
+        help_text="Upload the vendor's service report as a PDF.",
+    )
 
     # --- Workflow / audit ---
     status = models.CharField(
@@ -128,10 +148,27 @@ class ReturnToServiceReport(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    last_reminder_sent = models.DateTimeField(
+        null=True, blank=True, editable=False,
+        help_text="When an overdue-report reminder email was last sent for this report.",
+    )
 
     class Meta:
         ordering = ["-outage_start", "-created_at"]
         verbose_name = "return-to-service report"
+
+    @property
+    def is_complete(self):
+        return self.status == self.Status.RETURNED
+
+    @property
+    def has_vendor_report(self):
+        """True when a vendor report link or PDF is attached."""
+        return bool(self.vendor_report_url or self.vendor_report_file)
+
+    @property
+    def vendor_report_filename(self):
+        return self.vendor_report_file.name.rsplit("/", 1)[-1] if self.vendor_report_file else ""
 
     def __str__(self):
         return f"RTS-{self.pk or 0:05d} · {self.machine.name}"

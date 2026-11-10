@@ -10,11 +10,13 @@ urlpatterns = [
     path("<int:pk>/", views.report_detail, name="detail"),
     path("<int:pk>/edit/", views.report_edit, name="edit"),
     path("<int:pk>/pdf/", views.report_pdf, name="pdf"),
+    path("<int:pk>/vendor-report/", views.vendor_report, name="vendor_report"),
     path("<int:pk>/delete/", views.report_delete, name="delete"),
     # Clinic & machine management
     path("manage/login/", views.manage_login, name="manage_login"),
     path("manage/logout/", views.manage_logout, name="manage_logout"),
     path("manage/", views.manage, name="manage"),
+    path("manage/reminders/send/", views.send_reminders_now, name="send_reminders"),
     path("manage/clinics/add/", views.clinic_create, name="clinic_create"),
     path("manage/clinics/<int:pk>/edit/", views.clinic_edit, name="clinic_edit"),
     path("manage/clinics/<int:pk>/delete/", views.clinic_delete, name="clinic_delete"),

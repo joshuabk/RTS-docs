@@ -38,6 +38,12 @@
       <div class="field full"><div class="lbl">Outage issue</div><div class="val prose">{{ report.outage_issue }}</div></div>
       <div class="field"><div class="lbl">Work performed by</div><div class="val">{{ report.performed_by|default:"—" }}</div></div>
       <div class="field"><div class="lbl">Vendor report received</div><div class="val">{% if report.vendor_report_received %}Yes{% else %}<span class="pending">No</span>{% endif %}</div></div>
+      <div class="field"><div class="lbl">Vendor report</div><div class="val">
+        {% if report.vendor_report_file %}<a href="{% url 'reports:vendor_report' report.pk %}" target="_blank" rel="noopener">View PDF</a> <span class="help">({{ report.vendor_report_filename }})</span>{% endif %}
+        {% if report.vendor_report_file and report.vendor_report_url %} &middot; {% endif %}
+        {% if report.vendor_report_url %}<a href="{{ report.vendor_report_url }}" target="_blank" rel="noopener">Open link</a>{% endif %}
+        {% if not report.has_vendor_report %}&mdash;{% endif %}
+      </div></div>
       <div class="field full"><div class="lbl">Work performed</div><div class="val prose">{{ report.work_performed|default:"—" }}</div></div>
     </div>
   </div>

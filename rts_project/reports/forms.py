@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.utils import timezone
 
 from .models import Department, Machine, ReturnToServiceReport
@@ -34,8 +35,21 @@ class ClinicForm(forms.ModelForm):
     """Add a clinic that will appear as a selection option."""
     class Meta:
         model = Department
-        fields = ["name", "code", "location"]
-        labels = {"name": "Clinic name", "code": "Short code", "location": "Location"}
+        fields = ["name", "code", "location", "notification_emails"]
+        labels = {"name": "Clinic name", "code": "Short code", "location": "Location",
+                  "notification_emails": "Reminder email recipients"}
+        widgets = {"notification_emails": forms.Textarea(attrs={"rows": 2, "placeholder": "name@northside.com, other@northside.com"})}
+
+    def clean_notification_emails(self):
+        from django.core.validators import validate_email
+        raw = self.cleaned_data.get("notification_emails", "")
+        emails = [e.strip() for e in raw.replace(";", ",").replace("\n", ",").split(",") if e.strip()]
+        for e in emails:
+            try:
+                validate_email(e)
+            except forms.ValidationError:
+                raise forms.ValidationError(f"'{e}' is not a valid email address.")
+        return ", ".join(emails)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -57,6 +71,16 @@ class MachineForm(forms.ModelForm):
         self.fields["department"].queryset = Department.objects.all()
         self.fields["department"].empty_label = "Select a clinic…"
         _style(self.fields)
+
+
+class _PdfFileInput(forms.ClearableFileInput):
+    """File input without Django's default "Currently: <media link>" block.
+
+    The form template renders the current file itself, linking to the
+    protected download view, together with a "Remove" checkbox."""
+
+    def format_value(self, value):
+        return None
 
 
 class ReturnToServiceReportForm(forms.ModelForm):
@@ -82,6 +106,8 @@ class ReturnToServiceReportForm(forms.ModelForm):
             "physicist",
             "approved_by",
             "vendor_report_received",
+            "vendor_report_url",
+            "vendor_report_file",
             "status",
         ]
         widgets = {
@@ -90,6 +116,8 @@ class ReturnToServiceReportForm(forms.ModelForm):
             "outage_issue": forms.Textarea(attrs={"rows": 3}),
             "work_performed": forms.Textarea(attrs={"rows": 4}),
             "physics_evaluation": forms.Textarea(attrs={"rows": 4}),
+            "vendor_report_url": forms.URLInput(attrs={"placeholder": "https://…"}),
+            "vendor_report_file": _PdfFileInput(attrs={"accept": "application/pdf,.pdf"}),
         }
         labels = {
             "outage_issue": "Outage issue",
@@ -99,6 +127,8 @@ class ReturnToServiceReportForm(forms.ModelForm):
             "physics_evaluation": "Physics evaluation performed",
             "physicist": "Evaluator",
             "vendor_report_received": "Vendor report received",
+            "vendor_report_url": "Vendor report link",
+            "vendor_report_file": "Vendor report (PDF)",
             "approved_by": "Approving physicist",
         }
 
@@ -120,6 +150,7 @@ class ReturnToServiceReportForm(forms.ModelForm):
         for name in (
             "work_completed_at", "work_performed", "performed_by",
             "physics_evaluation", "physicist", "approved_by", "vendor_report_received",
+            "vendor_report_url", "vendor_report_file",
         ):
             self.fields[name].required = False
         for name in ("clinic", "machine", "outage_start", "outage_issue"):
@@ -194,4 +225,22 @@ class ReturnToServiceReportForm(forms.ModelForm):
                     "physics_status",
                     "Physics evaluation is still pending; resolve it before returning to treatment.",
                 )
+        return cleaned
+
+    def clean_vendor_report_file(self):
+        f = self.cleaned_data.get("vendor_report_file")
+        if f and hasattr(f, "size"):
+            limit_mb = getattr(settings, "MAX_UPLOAD_MB", 20)
+            if f.size > limit_mb * 1024 * 1024:
+                raise forms.ValidationError(f"The PDF must be smaller than {limit_mb} MB.")
+            ctype = getattr(f, "content_type", "") or ""
+            if ctype and ctype not in ("application/pdf", "application/x-pdf", "application/octet-stream"):
+                raise forms.ValidationError("Only PDF files can be uploaded.")
+        return f
+
+    def clean(self):
+        cleaned = super().clean()
+        # Attaching a link or a PDF means the vendor report has been received.
+        if cleaned.get("vendor_report_url") or cleaned.get("vendor_report_file"):
+            cleaned["vendor_report_received"] = True
         return cleaned

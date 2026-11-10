@@ -14,7 +14,7 @@
 <p class="help" style="margin:0 0 1rem;">A report can be opened as soon as a machine goes down. Only the fields marked
   <span class="req">*</span> are needed to save it; the rest can be completed as the repair progresses.</p>
 
-<form method="post" class="formcard" novalidate>
+<form method="post" enctype="multipart/form-data" class="formcard" novalidate>
   {% csrf_token %}
   {% if form.non_field_errors %}<div class="nonfield">{{ form.non_field_errors }}</div>{% endif %}
   <div class="form-grid">
@@ -25,6 +25,12 @@
         {% else %}
           <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="req">*</span>{% endif %}</label>
           {{ field }}
+          {% if field.name == 'vendor_report_file' and report and report.vendor_report_file %}
+            <span class="help">Current file:
+              <a href="{% url 'reports:vendor_report' report.pk %}" target="_blank" rel="noopener">{{ report.vendor_report_filename }}</a>
+              &nbsp;<label class="check-label" style="display:inline"><input type="checkbox" name="{{ field.html_name }}-clear" id="{{ field.html_name }}-clear_id"> <span>Remove</span></label>
+            </span>
+          {% endif %}
         {% endif %}
         {% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}
         {% if field.errors %}<ul class="errlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}

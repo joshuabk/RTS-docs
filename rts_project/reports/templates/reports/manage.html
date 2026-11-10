@@ -18,6 +18,27 @@
   report. Every machine belongs to exactly one clinic.
 </p>
 
+<!-- Overdue report reminders -->
+<section class="formcard" style="margin-bottom:1.2rem;">
+  <h2 class="card-title">Overdue report reminders</h2>
+  <p class="help" style="margin:.2rem 0 .8rem;">
+    Reminder emails are <strong>{% if reminders_enabled %}ON{% else %}OFF{% endif %}</strong>
+    (change <code>REMINDER_EMAILS_ENABLED</code> in <code>config/settings.py</code>).
+    A report is overdue when it is not yet "Returned to treatment" after {{ reminder_after_days }} days.
+    Recipients are set per clinic below (Edit → Reminder email recipients).
+  </p>
+  <p style="margin:0 0 .8rem;">
+    <strong>{{ overdue_count }}</strong> overdue report{{ overdue_count|pluralize }};
+    <strong>{{ due_count }}</strong> due for a reminder now.
+  </p>
+  <form method="post" action="{% url 'reports:send_reminders' %}" style="display:flex;gap:.6rem;flex-wrap:wrap;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary" {% if not due_count %}disabled{% endif %}>Send reminders now</button>
+    <button type="submit" name="force" value="1" class="btn" {% if not overdue_count %}disabled{% endif %}
+      title="Re-send for every overdue report, even ones reminded recently">Re-send for all overdue</button>
+  </form>
+</section>
+
 <div class="manage-grid">
   <!-- Add clinic -->
   <section class="formcard">
@@ -71,6 +92,8 @@
         <strong>{{ c.name }}</strong>
         {% if c.code %}<span class="mono-tag">{{ c.code }}</span>{% endif %}
         {% if c.location %}<span class="help"> · {{ c.location }}</span>{% endif %}
+        {% if c.notification_email_list %}<div class="help">Reminders to: {{ c.notification_email_list|join:", " }}</div>
+        {% else %}<div class="help pending">No reminder recipients set</div>{% endif %}
       </div>
       <div class="head-right">
         <span class="count">{{ c.machine_count }} machine{{ c.machine_count|pluralize }}</span>

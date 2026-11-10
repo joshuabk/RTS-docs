@@ -130,6 +130,12 @@ STATIC_URL = 'static/'
 # real WSGI server (waitress, gunicorn, mod_wsgi) WhiteNoise does the serving.
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Uploaded files (vendor report PDFs). Served through the protected
+# `reports:vendor_report` view, so no web-server media configuration is needed.
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+MAX_UPLOAD_MB = 20
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -164,3 +170,37 @@ LOGOUT_REDIRECT_URL = "login"
 # Use local timezone display for datetimes
 TIME_ZONE = "America/New_York"
 USE_TZ = True
+
+# ---------------------------------------------------------------------------
+# OVERDUE-REPORT REMINDER EMAILS
+#
+#   REMINDER_EMAILS_ENABLED  True  = reminder emails are sent
+#                            False = nothing is ever sent (the "Send now" button
+#                                    and the scheduled command just report what
+#                                    they *would* have sent)
+#
+# A report counts as overdue when it is not yet "Returned to treatment" and the
+# outage started more than REMINDER_AFTER_DAYS ago. Each clinic gets one email
+# listing its overdue reports, sent to the clinic's "Reminder email recipients"
+# (set on the Admin page) plus REMINDER_DEFAULT_RECIPIENTS. A report is
+# re-reminded every REMINDER_REPEAT_DAYS until it is completed.
+#
+# Send them on a schedule with:  python manage.py send_overdue_reminders
+# Restart the server after changing these.
+# ---------------------------------------------------------------------------
+REMINDER_EMAILS_ENABLED = False
+REMINDER_AFTER_DAYS = 7
+REMINDER_REPEAT_DAYS = 7
+REMINDER_DEFAULT_RECIPIENTS = []          # e.g. ["physics@northside.com"]
+REMINDER_SUBJECT_PREFIX = "[RTS Register] "
+SITE_URL = "http://localhost:8000"         # used to build links in the emails
+
+# Outgoing mail — same Gmail account as the Event Reporting app.
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = 'northsideemr@gmail.com'
+EMAIL_HOST_PASSWORD = 'wlkblvzmafvxftkq'
+EMAIL_TIMEOUT = 60
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

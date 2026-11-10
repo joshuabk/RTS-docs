@@ -28,6 +28,15 @@ def _fmt(dt):
     return dt.strftime("%d %b %Y, %H:%M")
 
 
+def _vendor_report_text(report):
+    parts = []
+    if report.vendor_report_file:
+        parts.append(f"PDF attached ({report.vendor_report_filename})")
+    if report.vendor_report_url:
+        parts.append(f'<link href="{report.vendor_report_url}" color="blue">{report.vendor_report_url}</link>')
+    return " / ".join(parts) if parts else "\u2014"
+
+
 def build_report_pdf(report):
     buffer = BytesIO()
     doc = SimpleDocTemplate(
@@ -146,6 +155,7 @@ def build_report_pdf(report):
          _fmt(report.work_completed_at) if report.work_completed_at else "Not yet completed", mono),
         ("WORK PERFORMED BY", report.performed_by, value),
         ("VENDOR REPORT RECEIVED", "Yes" if report.vendor_report_received else "No", value),
+        ("VENDOR REPORT", _vendor_report_text(report), value),
     ]))
     story.append(Paragraph("OUTAGE ISSUE", label))
     story.append(Paragraph((report.outage_issue or "\u2014").replace("\n", "<br/>"), value))

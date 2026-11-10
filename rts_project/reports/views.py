@@ -1,6 +1,7 @@
+from django.conf import settings
 from django.contrib import messages
 from django.db.models import Count
-from django.http import HttpResponse, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.dateparse import parse_date
 
@@ -11,6 +12,7 @@ from .forms import (
 )
 from .models import Department, Machine, ReturnToServiceReport
 from .pdf import build_report_pdf
+from . import reminders
 from .admin_gate import SESSION_KEY, check_credentials, manage_admin_required
 
 from django.db.models.deletion import ProtectedError
@@ -81,9 +83,21 @@ def report_detail(request, pk):
     return render(request, "reports/report_detail.html", {"report": report})
 
 
+def vendor_report(request, pk):
+    """Serve the uploaded vendor report PDF (behind the same login as the site)."""
+    report = get_object_or_404(ReturnToServiceReport, pk=pk)
+    if not report.vendor_report_file:
+        raise Http404("No vendor report uploaded for this report.")
+    try:
+        fh = report.vendor_report_file.open("rb")
+    except FileNotFoundError:
+        raise Http404("The uploaded file is missing on the server.")
+    return FileResponse(fh, content_type="application/pdf", filename=report.vendor_report_filename)
+
+
 def report_create(request):
     if request.method == "POST":
-        form = ReturnToServiceReportForm(request.POST)
+        form = ReturnToServiceReportForm(request.POST, request.FILES)
         if form.is_valid():
             report = form.save(commit=False)
             report.created_by = request.user if request.user.is_authenticated else None
@@ -106,7 +120,7 @@ def report_create(request):
 def report_edit(request, pk):
     report = get_object_or_404(ReturnToServiceReport, pk=pk)
     if request.method == "POST":
-        form = ReturnToServiceReportForm(request.POST, instance=report)
+        form = ReturnToServiceReportForm(request.POST, request.FILES, instance=report)
         if form.is_valid():
             form.save()
             return redirect(report)
@@ -210,11 +224,39 @@ def manage(request):
         "reports/manage.html",
         {
             "clinics": clinics,
+            "overdue_count": reminders.overdue_reports().count(),
+            "due_count": len(reminders.reports_due_for_reminder()),
+            "reminders_enabled": reminders.reminders_enabled(),
+            "reminder_after_days": settings.REMINDER_AFTER_DAYS,
             "clinic_form": ClinicForm(),
             "machine_form": MachineForm(),
             "has_clinics": clinics.exists(),
         },
     )
+
+
+@manage_admin_required
+def send_reminders_now(request):
+    """Admin button: send overdue-report reminder emails immediately."""
+    if request.method == "POST":
+        result = reminders.send_overdue_reminders(force=request.POST.get("force") == "1")
+        if not result["enabled"]:
+            messages.warning(
+                request,
+                f"Reminder emails are turned OFF in settings (REMINDER_EMAILS_ENABLED). "
+                f"{result['reports']} overdue report(s) would have been emailed.",
+            )
+        elif not result["emails"]:
+            messages.info(request, "No overdue reports are due for a reminder right now.")
+        else:
+            sent = ", ".join(c.name for c, r, n, s in result["emails"] if r)
+            msg = f"Sent {result['sent']} reminder email(s)" + (f" to: {sent}." if sent else ".")
+            if result["skipped_no_recipients"]:
+                msg += f" {result['skipped_no_recipients']} clinic(s) skipped - no recipients set."
+            messages.success(request, msg)
+        for err in result["errors"]:
+            messages.error(request, f"Email failed - {err}")
+    return redirect("reports:manage")
 
 
 @manage_admin_required
