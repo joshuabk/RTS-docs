@@ -189,8 +189,8 @@ USE_TZ = True
 # Restart the server after changing these.
 # ---------------------------------------------------------------------------
 REMINDER_EMAILS_ENABLED = False
-REMINDER_AFTER_DAYS = 7
-REMINDER_REPEAT_DAYS = 7
+REMINDER_AFTER_DAYS = 14
+REMINDER_REPEAT_DAYS = 14
 REMINDER_DEFAULT_RECIPIENTS = []          # e.g. ["physics@northside.com"]
 REMINDER_SUBJECT_PREFIX = "[RTS Register] "
 SITE_URL = "http://localhost:8000"         # used to build links in the emails
